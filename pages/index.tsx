@@ -11,8 +11,8 @@ const IndexPage: NextPage = function () {
   const { signInWithGoogle, authUser } = useAuth();
   console.info(authUser);
   return (
-    <ServiceLayout title="test">
-      <Box maxW="md" mx="auto">
+    <ServiceLayout title="test" minH="100vh" backgroundColor="gray.50">
+      <Box maxW="md" mx="auto" pt="10">
         {/*chakra-ui에서 제공하는 가장 기본적인 레이아웃. html로 치면 div*/}
         <img src="/main_logo.svg" alt="메인 로고" />
         <Flex justify="center">
