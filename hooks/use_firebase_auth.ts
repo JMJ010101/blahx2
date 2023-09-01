@@ -15,6 +15,23 @@ export default function useFirebaseAuth() {
       const signInResult = await signInWithPopup(FirebaseClient.getInstance().Auth, provider);
       if (signInResult.user) {
         console.info(signInResult.user);
+        // 비동기로 api 콜
+        const resp = await fetch('/api/members.add', {
+          method: 'POST',
+          //JSON 형태로 보내기 때문에 헤더 특정
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: signInResult.user.uid,
+            email: signInResult.user.email,
+            displayName: signInResult.user.displayName,
+            photoURL: signInResult.user.photoURL,
+          }),
+        });
+        console.info({ status: resp.status });
+        const respData = await resp.json();
+        console.info(respData);
       }
     } catch (err) {
       console.error(err);
