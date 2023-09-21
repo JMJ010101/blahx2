@@ -2,7 +2,7 @@ import FirebaseAdmin from '../firebase_admin';
 import { InAuthUser } from '../in_auth_user';
 
 const MEMBER_COL = 'members';
-const SCR_NAME_COL = 'screen_name';
+const SCR_NAME_COL = 'screen_names';
 
 type AddResult = { result: true; id: string } | { result: false; message: string };
 //                result가 true이면 id를 string으로 반환,,,
