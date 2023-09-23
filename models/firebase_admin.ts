@@ -58,7 +58,7 @@ export default class FirebaseAdmin {
   }
 
   /** firestore를 반환 */
-  public get Firebase(): FirebaseFirestore.Firestore {
+  public get Firestore(): FirebaseFirestore.Firestore {
     //getter이용. fucntion처럼 생겼는데 실행할 때는 field처럼 실행.
     if (this.init === false) {
       this.bootstrap();

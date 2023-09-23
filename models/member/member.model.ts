@@ -11,10 +11,10 @@ async function add({ uid, displayName, email, photoURL }: InAuthUser): Promise<A
   try {
     const screenName = (email as string).replace('@gmail.com', '');
     //@gmail.com을 빈 문자열로 변경
-    const addResult = await FirebaseAdmin.getInstance().Firebase.runTransaction(async (transaction) => {
+    const addResult = await FirebaseAdmin.getInstance().Firestore.runTransaction(async (transaction) => {
       //문서를 찾기, uid로 이미 등록되어있는지 확인
-      const memberRef = FirebaseAdmin.getInstance().Firebase.collection(MEMBER_COL).doc(uid);
-      const screenNameRef = FirebaseAdmin.getInstance().Firebase.collection(SCR_NAME_COL).doc(screenName);
+      const memberRef = FirebaseAdmin.getInstance().Firestore.collection(MEMBER_COL).doc(uid);
+      const screenNameRef = FirebaseAdmin.getInstance().Firestore.collection(SCR_NAME_COL).doc(screenName);
       const memberDoc = await transaction.get(memberRef);
       if (memberDoc.exists) {
         //이미 추가된 상태
@@ -41,7 +41,7 @@ async function add({ uid, displayName, email, photoURL }: InAuthUser): Promise<A
 }
 
 async function findByScreenName(screenName: string): Promise<InAuthUser | null> {
-  const memberRef = FirebaseAdmin.getInstance().Firebase.collection(SCR_NAME_COL).doc(screenName);
+  const memberRef = FirebaseAdmin.getInstance().Firestore.collection(SCR_NAME_COL).doc(screenName);
 
   const memberDoc = await memberRef.get();
   if (memberDoc.exists === false) {
