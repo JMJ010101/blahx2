@@ -51,7 +51,7 @@ async function post({
   });
 }
 
-// 사용자들이 등록한 메시지를 불러오는 api
+// 사용자들이 등록한 메시지 조회
 async function list({ uid }: { uid: string }) {
   const memberRef = Firestore.collection(MEMBER_COL).doc(uid);
   const listData = await Firestore.runTransaction(async (transaction) => {
@@ -76,10 +76,35 @@ async function list({ uid }: { uid: string }) {
   return listData;
 }
 
+// 메시지 단건 조회
+async function get({ uid, messageId }: { uid: string; messageId: string }) {
+  const memberRef = Firestore.collection(MEMBER_COL).doc(uid);
+  const messageRef = Firestore.collection(MEMBER_COL).doc(uid).collection(MSG_COL).doc(messageId);
+  const data = await Firestore.runTransaction(async (transaction) => {
+    const memberDoc = await transaction.get(memberRef);
+    const messageDoc = await transaction.get(messageRef);
+    if (memberDoc.exists === false) {
+      throw new CustomServerError({ statusCode: 400, message: '존재하지 않는 사용자입니다.' });
+    }
+    if (messageDoc.exists === false) {
+      throw new CustomServerError({ statusCode: 400, message: '존재하지 않는 문서입니다.' });
+    }
+    const messageData = messageDoc.data() as InMessageServer;
+    return {
+      ...messageData,
+      id: messageId,
+      createAt: messageData.createAt.toDate().toISOString(),
+      replyAt: messageData.replyAt ? messageData.replyAt.toDate().toISOString() : undefined,
+    };
+  });
+  return data;
+}
+
+// 댓글 추가
 async function postReply({ uid, messageId, reply }: { uid: string; messageId: string; reply: string }) {
   const memberRef = Firestore.collection(MEMBER_COL).doc(uid);
   const messageRef = Firestore.collection(MEMBER_COL).doc(uid).collection(MSG_COL).doc(messageId);
-  await Firestore.runTransaction(async (transaction) => {
+  const data = await Firestore.runTransaction(async (transaction) => {
     const memberDoc = await transaction.get(memberRef);
     const messageDoc = await transaction.get(messageRef);
     if (memberDoc.exists === false) {
@@ -94,11 +119,13 @@ async function postReply({ uid, messageId, reply }: { uid: string; messageId: st
     }
     await transaction.update(messageRef, { reply, replyAt: firestore.FieldValue.serverTimestamp() });
   });
+  return data;
 }
 
 const MessageModel = {
   post,
   list,
+  get,
   postReply,
 };
 
