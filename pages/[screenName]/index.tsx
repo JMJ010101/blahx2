@@ -11,10 +11,12 @@ import {
   VStack,
   useToast,
 } from '@chakra-ui/react';
+import { TriangleDownIcon } from '@chakra-ui/icons';
 import { GetServerSideProps, NextPage } from 'next';
 import ResizeTextarea from 'react-textarea-autosize';
 import { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
+import { useQuery } from 'react-query';
 import { ServiceLayout } from '@/components/service_layout';
 import { useAuth } from '@/contexts/auth_user.context';
 import { InAuthUser } from '@/models/in_auth_user';
@@ -71,21 +73,32 @@ async function postMessage({
 const UserHomePage: NextPage<Props> = function ({ userInfo }) {
   const [message, setMessage] = useState('');
   const [isAnonymous, setAnonymous] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [messageList, setMessageList] = useState<InMessage[]>([]);
   const [messageListFetchTrigger, setMessageListFetchTrigger] = useState(false);
   const toast = useToast();
   const { authUser } = useAuth();
-  async function fetchMessageList(uid: string) {
-    try {
-      const resp = await fetch(`/api/messages.list?uid=${uid}`);
-      if (resp.status === 200) {
-        const data = await resp.json();
-        setMessageList(data);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
+
+  // useQuery로 대신사용
+  // async function fetchMessageList(uid: string) {
+  //   try {
+  //     const resp = await fetch(`/api/messages.list?uid=${uid}&page=${page}&size=10`);
+  //     if (resp.status === 200) {
+  //       const data: {
+  //         totalElements: number;
+  //         totalPages: number;
+  //         page: number;
+  //         size: number;
+  //         content: InMessage[];
+  //       } = await resp.json();
+  //       setTotalPages(data.totalPages);
+  //       setMessageList((prev) => [...prev, ...data.content]);
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // }
 
   async function fetchMessageInfo({ uid, messageId }: { uid: string; messageId: string }) {
     try {
@@ -107,10 +120,39 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
     }
   }
 
-  useEffect(() => {
-    if (userInfo === null) return;
-    fetchMessageList(userInfo.uid);
-  }, [userInfo, messageListFetchTrigger]);
+  const messageListQueryKey = ['messageList', userInfo?.uid, page, messageListFetchTrigger];
+  useQuery(
+    messageListQueryKey,
+    async () =>
+      //eslint-disable-next-line no-return-await
+      await axios.get<{
+        totalElements: number;
+        totalPages: number;
+        page: number;
+        size: number;
+        content: InMessage[];
+      }>(`/api/messages.list?uid=${userInfo?.uid}&page=${page}&size=10`),
+    {
+      keepPreviousData: true, // 기존 데이터 유지
+      refetchOnWindowFocus: false, // refetch 시키지 않음
+      onSuccess: (data) => {
+        // 데이터를 받아오고 어떤 처리를 할지
+        setTotalPages(data.data.totalPages);
+        // 중복키를 가진 경우 그 내용 제거 => 1페이지인 경우 기존정보 사용하지 않기
+        if (page === 1) {
+          setMessageList([...data.data.content]);
+          return;
+        }
+        setMessageList((prev) => [...prev, ...data.data.content]); // 기존 값과 비교해서 넣기
+      },
+    },
+  );
+
+  // useQuery로 대신사용
+  // useEffect(() => {
+  //   if (userInfo === null) return;
+  //   fetchMessageList(userInfo.uid);
+  // }, [userInfo, messageListFetchTrigger, page]);
 
   if (userInfo === null) {
     return <p>사용자를 찾을 수 없습니다.</p>;
@@ -196,7 +238,11 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
                 }
                 // 등록 후 입력창 리셋
                 setMessage('');
-                setMessageListFetchTrigger((prev) => !prev);
+                setPage(1);
+                // 페이지 먼저 변경된 후, 50밀리세컨드 이후 messageList 조회
+                setTimeout(() => {
+                  setMessageListFetchTrigger((prev) => !prev);
+                }, 50);
               }}
             >
               등록
@@ -238,6 +284,19 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
             />
           ))}
         </VStack>
+        {totalPages > page && (
+          <Button
+            width="full"
+            mt="2"
+            fontSize="sm"
+            leftIcon={<TriangleDownIcon />}
+            onClick={() => {
+              setPage((p) => p + 1);
+            }}
+          >
+            더보기
+          </Button>
+        )}
       </Box>
     </ServiceLayout>
   );
