@@ -24,6 +24,7 @@ import FirebaseClient from '@/models/firebase_client';
 interface Props {
   uid: string;
   displayName: string;
+  screenName: string;
   photoURL: string;
   /** 댓글창을 띄울지 말지 선택하려면 사용자 화면에 소유자인지 나타낼 수 있어야함함 */
   isOwner: boolean;
@@ -31,7 +32,7 @@ interface Props {
   onSendComplete: () => void;
 }
 
-const MessageItem = function ({ uid, displayName, photoURL, isOwner, item, onSendComplete }: Props) {
+const MessageItem = function ({ uid, screenName, displayName, photoURL, isOwner, item, onSendComplete }: Props) {
   const [reply, setReply] = useState('');
   const toast = useToast();
 
@@ -108,6 +109,14 @@ const MessageItem = function ({ uid, displayName, photoURL, isOwner, item, onSen
                   }}
                 >
                   {isDeny ? '비공개 처리 해제' : '비공개 처리'}
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    window.location.href = `/${screenName}/${item.id}`;
+                    // screenName을 사용하기 위해 상위 컴포넌트에서부터 props로 전달전달해옴 (props drilling)
+                  }}
+                >
+                  메시지 상세 보기
                 </MenuItem>
               </MenuList>
             </Menu>
