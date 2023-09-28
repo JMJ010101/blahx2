@@ -103,11 +103,7 @@ const MessageItem = function ({ uid, screenName, displayName, photoURL, isOwner,
                 size="xs"
               />
               <MenuList>
-                <MenuItem
-                  onClick={() => {
-                    updateMessage({ deny: item.deny !== undefined ? !item.deny : true });
-                  }}
-                >
+                <MenuItem onClick={() => updateMessage({ deny: item.deny !== undefined ? !item.deny : true })}>
                   {isDeny ? '비공개 처리 해제' : '비공개 처리'}
                 </MenuItem>
                 <MenuItem

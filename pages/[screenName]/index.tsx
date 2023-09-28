@@ -77,6 +77,7 @@ const UserHomePage: NextPage<Props> = function ({ userInfo, screenName }) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [messageList, setMessageList] = useState<InMessage[]>([]);
+  // 리프레쉬 트리거
   const [messageListFetchTrigger, setMessageListFetchTrigger] = useState(false);
   const toast = useToast();
   const { authUser } = useAuth();

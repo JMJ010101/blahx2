@@ -96,12 +96,11 @@ async function list({ uid }: { uid: string }) {
     const messageCol = memberRef.collection(MSG_COL).orderBy('createAt', 'desc');
     const messageColDoc = await transaction.get(messageCol);
     const data = messageColDoc.docs.map((mv) => {
+      //omit 특정 속성을 제거한 타입
       const docData = mv.data() as Omit<InMessageServer, 'id'>; // id가 없는 채로 값이 넘어옴
-      const isDeny = docData.deny !== undefined && docData.deny === true;
       const returnData = {
         ...docData, // docData 전체
         id: mv.id,
-        message: isDeny ? '비공개 처리된 메시지 입니다.' : docData.message,
         createAt: docData.createAt.toDate().toISOString(),
         replyAt: docData.replyAt ? docData.replyAt.toDate().toISOString() : undefined,
       } as InMessage;
@@ -112,7 +111,7 @@ async function list({ uid }: { uid: string }) {
   return listData;
 }
 
-// 페이징
+// list를 페이지 단위로 가져옴
 async function listWithPage({ uid, page = 1, size = 10 }: { uid: string; page?: number; size?: number }) {
   const memberRef = Firestore.collection(MEMBER_COL).doc(uid);
   const listData = await Firestore.runTransaction(async (transaction) => {
@@ -138,10 +137,13 @@ async function listWithPage({ uid, page = 1, size = 10 }: { uid: string; page?: 
     const messageCol = memberRef.collection(MSG_COL).orderBy('messageNo', 'desc').startAt(startAt).limit(size);
     const messageColDoc = await transaction.get(messageCol);
     const data = messageColDoc.docs.map((mv) => {
+      //omit 특정 속성을 제거한 타입
       const docData = mv.data() as Omit<InMessageServer, 'id'>; // id가 없는 채로 값이 넘어옴
+      const isDeny = docData.deny !== undefined && docData.deny === true;
       const returnData = {
         ...docData, // docData 전체
         id: mv.id,
+        message: isDeny ? '비공개 처리된 메시지 입니다.' : docData.message,
         createAt: docData.createAt.toDate().toISOString(),
         replyAt: docData.replyAt ? docData.replyAt.toDate().toISOString() : undefined,
       } as InMessage;
