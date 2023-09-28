@@ -4,6 +4,7 @@ import { useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
 import Link from 'next/link';
 import { ChevronLeftIcon } from '@chakra-ui/icons';
+import Head from 'next/head';
 import { ServiceLayout } from '@/components/service_layout';
 import { useAuth } from '@/contexts/auth_user.context';
 import { InAuthUser } from '@/models/in_auth_user';
@@ -14,9 +15,10 @@ interface Props {
   userInfo: InAuthUser | null;
   messageData: InMessage | null;
   screenName: string;
+  baseUrl: string;
 }
 
-const MessagePage: NextPage<Props> = function ({ userInfo, messageData: initMsgData, screenName }) {
+const MessagePage: NextPage<Props> = function ({ userInfo, messageData: initMsgData, screenName, baseUrl }) {
   // messageData가 똑같은 이름으로 두 개가 들어가고 있기 때문에 initMsgData로 이용
   const [messageData, setMessageData] = useState<null | InMessage>(initMsgData);
   const { authUser } = useAuth();
@@ -40,38 +42,50 @@ const MessagePage: NextPage<Props> = function ({ userInfo, messageData: initMsgD
     return <p>메시지 정보가 없습니다.</p>;
   }
   const isOwner = authUser !== null && authUser.uid === userInfo.uid;
+  const metaImgUrl = `${baseUrl}/open-graph-img?text=${encodeURIComponent(messageData.message)}`;
+  const thumbnailImgUrl = `${baseUrl}/api/thumbnail?url=${encodeURIComponent(metaImgUrl)}`;
   return (
-    <ServiceLayout title={`${userInfo.displayName}의 홈`} minH="100vh" backgroundColor="gray.50">
-      <Box maxW="md" mx="auto" pt="6">
-        <Link href={`/${screenName}`}>
-          <a>
-            <Button leftIcon={<ChevronLeftIcon />} mb="2" fontSize="sm">
-              {screenName} 홈으로
-            </Button>
-          </a>
-        </Link>
-        <Box borderWidth="1px" borderRadius="lg" overflow="hidden" mb="2" bg="white">
-          <Flex p="6">
-            <Avatar size="lg" src={userInfo.photoURL ?? 'https://bit.ly/broken-link'} mr="2" />
-            <Flex direction="column" justify="center">
-              <Text fontSize="md">{userInfo.displayName}</Text>
-              <Text fontSize="xs">{userInfo.email}</Text>
+    <>
+      <Head>
+        {/*twitter (name), facebook (property)이 각각 이미지를 갖는 게 다름*/}
+        <meta property="og:image" content={thumbnailImgUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@blahx2" />
+        <meta name="twitter:title" content={messageData.message} />
+        <meta name="twitter:image" content={thumbnailImgUrl} />
+      </Head>
+      <ServiceLayout title={`${userInfo.displayName}의 홈`} minH="100vh" backgroundColor="gray.50">
+        <Box maxW="md" mx="auto" pt="6">
+          <Link href={`/${screenName}`}>
+            <a>
+              <Button leftIcon={<ChevronLeftIcon />} mb="2" fontSize="sm">
+                {screenName} 홈으로
+              </Button>
+            </a>
+          </Link>
+          <Box borderWidth="1px" borderRadius="lg" overflow="hidden" mb="2" bg="white">
+            <Flex p="6">
+              <Avatar size="lg" src={userInfo.photoURL ?? 'https://bit.ly/broken-link'} mr="2" />
+              <Flex direction="column" justify="center">
+                <Text fontSize="md">{userInfo.displayName}</Text>
+                <Text fontSize="xs">{userInfo.email}</Text>
+              </Flex>
             </Flex>
-          </Flex>
+          </Box>
+          <MessageItem
+            item={messageData}
+            uid={userInfo.uid}
+            displayName={userInfo.displayName ?? ''}
+            screenName={screenName}
+            photoURL={userInfo.photoURL ?? 'https://bit.ly/broken-link'}
+            isOwner={isOwner}
+            onSendComplete={() => {
+              fetchMessageInfo({ uid: userInfo.uid, messageId: messageData.id });
+            }}
+          />
         </Box>
-        <MessageItem
-          item={messageData}
-          uid={userInfo.uid}
-          displayName={userInfo.displayName ?? ''}
-          screenName={screenName}
-          photoURL={userInfo.photoURL ?? 'https://bit.ly/broken-link'}
-          isOwner={isOwner}
-          onSendComplete={() => {
-            fetchMessageInfo({ uid: userInfo.uid, messageId: messageData.id });
-          }}
-        />
-      </Box>
-    </ServiceLayout>
+      </ServiceLayout>
+    </>
   );
 };
 
@@ -83,6 +97,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
         userInfo: null,
         messageData: null,
         screenName: '',
+        baseUrl: '',
       },
     };
   }
@@ -92,6 +107,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
         userInfo: null,
         messageData: null,
         screenName: '',
+        baseUrl: '',
       },
     };
   }
@@ -113,6 +129,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
           userInfo: null,
           messageData: null,
           screenName: screenNameToStr,
+          baseUrl,
         },
       };
     }
@@ -124,6 +141,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
         userInfo: userInfoResp.data,
         messageData: messageInfoResp.status !== 200 || messageInfoResp.data === undefined ? null : messageInfoResp.data,
         screenName: screenNameToStr,
+        baseUrl,
       },
     };
   } catch (err) {
@@ -133,6 +151,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
         userInfo: null,
         messageData: null,
         screenName: '',
+        baseUrl: '',
       },
     };
   }
