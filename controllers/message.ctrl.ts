@@ -25,6 +25,7 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
 
 async function list(req: NextApiRequest, res: NextApiResponse) {
   const { uid, page, size } = req.query;
+
   if (uid === undefined) {
     throw new BadReqError('uid 누락');
   }

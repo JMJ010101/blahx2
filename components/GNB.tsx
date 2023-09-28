@@ -2,7 +2,7 @@ import { Avatar, Box, Button, Flex, IconButton, Menu, MenuButton, MenuItem, Menu
 import { useAuth } from '@/contexts/auth_user.context';
 
 const GNB = function () {
-  //context에서 값을 뽑아냄
+  //context에서 값을 뽑아냄.
   const { loading, authUser, signOut, signInWithGoogle } = useAuth();
 
   const loginBtn = (

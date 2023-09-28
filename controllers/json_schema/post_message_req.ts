@@ -1,5 +1,5 @@
 import { JSONSchema6 } from 'json-schema';
-
+//
 const PostMessageReq: JSONSchema6 = {
   additionalProperties: false,
   properties: {
